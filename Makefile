@@ -99,6 +99,12 @@ LDFLAGS += -rdynamic
 LDLIBS += -lrt
 endif
 
+ifeq ($(OS), Haiku)
+LDFLAGS := $(filter-out -rdynamic,$(LDFLAGS)) -s
+LDLIBS := $(filter-out -lrt,$(LDLIBS))
+LDLIBS := $(filter-out -ldl,$(LDLIBS))
+endif
+
 YOSYS_VER := 0.8+$(shell cd $(YOSYS_SRC) && test -e .git && { git log --author=clifford@clifford.at --oneline 4d4665b.. | wc -l; })
 GIT_REV := $(shell cd $(YOSYS_SRC) && git rev-parse --short HEAD 2> /dev/null || echo UNKNOWN)
 OBJS = kernel/version_$(GIT_REV).o
@@ -293,7 +299,9 @@ ifeq ($(ENABLE_PLUGINS),1)
 CXXFLAGS += $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) $(PKG_CONFIG) --silence-errors --cflags libffi) -DYOSYS_ENABLE_PLUGINS
 LDLIBS += $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) $(PKG_CONFIG) --silence-errors --libs libffi || echo -lffi)
 ifneq ($(OS), FreeBSD)
+ifneq ($(OS), Haiku)
 LDLIBS += -ldl
+endif
 endif
 endif
 

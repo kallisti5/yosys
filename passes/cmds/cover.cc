@@ -105,7 +105,11 @@ struct CoverPass : public Pass {
 			#else
 					char filename_buffer[4096];
 					snprintf(filename_buffer, 4096, "%s/yosys_cover_%d_XXXXXX.txt", filename.c_str(), getpid());
+					#if defined(__HAIKU__)
+					filename = mkstemp(filename_buffer);
+					#else
 					filename = mkstemps(filename_buffer, 4);
+					#endif
 			#endif
 				}
 				FILE *f = fopen(filename.c_str(), open_mode);

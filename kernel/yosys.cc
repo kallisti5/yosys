@@ -55,6 +55,11 @@
 #  include <sys/sysctl.h>
 #endif
 
+#ifdef __HAIKU__
+#  include <OS.h>
+#  include <FindDirectory.h>
+#endif
+
 #include <limits.h>
 #include <errno.h>
 
@@ -386,7 +391,11 @@ std::string make_temp_file(std::string template_str)
 	int suffixlen = GetSize(template_str) - pos - 6;
 
 	char *p = strdup(template_str.c_str());
+#  if defined(__HAIKU__)
+	close(mkstemp(p));
+#  else
 	close(mkstemps(p, suffixlen));
+#  endif
 	template_str = p;
 	free(p);
 #endif
@@ -731,6 +740,19 @@ std::string proc_self_dirname()
 std::string proc_self_dirname()
 {
 	return "/";
+}
+#elif defined(__HAIKU__)
+std::string proc_self_dirname()
+{
+	uint32_t buflen = PATH_MAX + 1;
+	char path[buflen];
+	status_t result = find_path(B_APP_IMAGE_SYMBOL, B_FIND_PATH_IMAGE_PATH,
+		NULL, path, buflen);
+	if (result != B_OK) {
+		log_error("find_path() failed.\n");
+		return "/";
+	}
+	return std::string(path, buflen);
 }
 #else
 	#error Dont know how to determine process executable base path!
